@@ -1,0 +1,10 @@
+api_platform:
+    title: "API avec Symfony"
+    description: "Création d'une API avec Symfony"
+    version: "1.0.0"
+    mapping:
+        paths: ['%kernel.project_dir%/src/Entity']
+    patch_formats:
+        json: ['application/merge-patch+json']
+    swagger:
+        versions: [3]
