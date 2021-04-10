@@ -14,6 +14,7 @@ use App\Entity\Tag;
 use App\Entity\Article;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Core\Security;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\String\Slugger\SluggerInterface;
 use ApiPlatform\Core\DataPersister\ContextAwareDataPersisterInterface;
@@ -26,15 +27,18 @@ class ArticleDataPersister implements ContextAwareDataPersisterInterface
     private $_entityManager;
     private $_slugger;
     private $_request;
+    private $_security;
 
     public function __construct(
         EntityManagerInterface $entityManager,
         SluggerInterface $slugger,
-        RequestStack $request
+        RequestStack $request,
+        Security $security
     ){
         $this->_entityManager = $entityManager;
         $this->_slugger = $slugger;
         $this->_request = $request->getCurrentRequest();
+        $this->_security = $security;
     }
 
     public function supports($data, array $context = []): bool
@@ -47,6 +51,10 @@ class ArticleDataPersister implements ContextAwareDataPersisterInterface
         $data->setSlug(
             $this->_slugger->slug(strtolower($data->getTitle()))
         );
+        if($this->_request->getMethod() == 'POST'){
+            $data->setAuthor($this->_security->getUser());
+        }
+
         if($this->_request->getMethod() !== 'POST'){
             $data->setUpdatedAt(new \DateTime());
         }

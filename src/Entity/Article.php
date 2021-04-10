@@ -12,8 +12,16 @@ use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ApiResource(
- *              collectionOperations={"get", "post"},
- *              itemOperations={"get","put","delete"},
+ *              collectionOperations={
+ *                  "get", 
+ *                  "post"={"security"="is_granted('ROLE_USER')"}
+ *              },
+ *              itemOperations={
+ *                  "get",
+ *                  "put"={"security"="is_granted('edit', object)"},
+ *                  "patch"={"security"="is_granted('edit', object)"},
+ *                  "delete"={"security"="is_granted('delete', object)"}
+ *              },
  *              normalizationContext={"groups"={"article:read"}},
  *              denormalizationContext={"groups"={"article:write"}}
  * )
@@ -26,13 +34,13 @@ class Article
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
-     * @Groups("article:read")
+     * @Groups({"article:read", "user:read"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=255)
-     * @Groups("article:read", "article:write")
+     * @Groups({"article:read", "article:write", "user:read"})
      */
     private $title;
 
@@ -85,7 +93,14 @@ class Article
      */
     private $tags;
 
-    public function __construct(){
+    /**
+     * @ORM\ManyToOne(targetEntity=User::class, inversedBy="articles")
+     * @Groups("article:read")
+     */
+    private $author;
+
+    public function __construct()
+    {
         $this->isPublished = false;
         $this->publishedAt = null;
         $this->updatedAt = new \DateTime();
@@ -232,6 +247,18 @@ class Article
     public function removeTag(tag $tag): self
     {
         $this->tags->removeElement($tag);
+
+        return $this;
+    }
+
+    public function getAuthor(): ?User
+    {
+        return $this->author;
+    }
+
+    public function setAuthor(?User $author): self
+    {
+        $this->author = $author;
 
         return $this;
     }
